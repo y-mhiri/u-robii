@@ -1,0 +1,36 @@
+info:
+  name: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/datasets/mixture_train
+  observation_profile: random_static
+  nimage: 1000
+  npixel: 32
+  coplanar: true
+sky_model:
+  from_sky_model: false
+  path: ''
+source:
+  nsource:
+    min: 2
+    max: 10
+  positions:
+    fixed: false
+    coordinates: null
+  power:
+    min: 0.5
+    max: 1.5
+  scale:
+    min: 2
+    max: 3
+noise:
+  add_noise: true
+  student: false
+  kdistribution: false
+  mixture: true
+  snr:
+    min: 10
+    max: 10
+  dof:
+    min: 3
+    max: 10
+calibration:
+  add_calibration_error: false
+  epsilon: 0.1
