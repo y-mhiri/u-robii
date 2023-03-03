@@ -1,0 +1,12 @@
+name: thebe
+out: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/models
+dataset: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/datasets/stnoise_train.zip
+test_set_path: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/datasets/stnoise_test.zip
+depth: 10
+step: 100
+batch_size: 64
+layers: robust
+architecture: 'ROBUST'
+nepoch : 10000
+learning_rate: 0.0001
+loss: L2

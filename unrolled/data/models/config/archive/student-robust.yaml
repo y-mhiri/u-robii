@@ -1,0 +1,12 @@
+name: student-robust-lr=1
+out: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/models
+dataset: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/datasets/stnoise_train.zip
+test_set_path: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/datasets/stnoise_test.zip
+depth: 10
+step: 100
+batch_size: 64
+layers: robust
+architecture: 'RES'
+nepoch : 100
+learning_rate: 1
+loss: L2
