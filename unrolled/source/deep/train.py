@@ -109,7 +109,7 @@ def train(config):
     os.mkdir(out) if not os.path.exists(out) else print("Folder exists")
 
     tmp = dset_path.split('.')[0]
-    shutil.copy(f'{tmp}.yaml', f'{out_path}/dataset_config.yaml')
+    shutil.copy(f'{tmp}.yaml', f'{out}/dataset.yaml')
 
 # -------------------------------------------------------------------------------------
 
@@ -123,7 +123,7 @@ def train(config):
 
     logpath = f"{out}/log.out"
     logprint(OmegaConf.to_yaml(conf), path=logpath)
-    with open(f'{model_name}.yaml', 'w') as file:
+    with open(f'{out}/{model_name}.yaml', 'w') as file:
         file.write(OmegaConf.to_yaml(conf))
 # -------------------------------------------------------------------------------------
 
