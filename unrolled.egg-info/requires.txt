@@ -1,0 +1,16 @@
+astropy
+click
+dash
+ducc0
+ducc0
+flask-caching
+matplotlib
+numcodecs
+numpy
+omegaconf
+python-casacore
+scikit-image
+scipy
+torch
+torchvision
+zarr

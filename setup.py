@@ -2,13 +2,11 @@ import setuptools
 
 
 
-
-
 setuptools.setup(  
     name='unrolled',
     version='0.1',
     description='Code that goes with EUSIPCO paper',
-    url='#',
+    url='y-mhiri.github.io',
     author='y-mhiri',
     install_requires=['numpy', 
                      'scipy', 
@@ -32,7 +30,7 @@ setuptools.setup(
                 'train_model = unrolled.source.deep.train:train',
             ]
     },
-    author_email='',
+    author_email='yassine.mhiri@outlook.fr',
     packages=setuptools.find_packages(),
     zip_safe=False
         )

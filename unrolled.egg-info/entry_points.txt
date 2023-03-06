@@ -1,0 +1,4 @@
+[console_scripts]
+generate_dataset = unrolled.source.astro.astro:generate_dataset
+train_model = unrolled.source.deep.train:train
+

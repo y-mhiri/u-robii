@@ -1,0 +1,36 @@
+info:
+  name: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/datasets/student_train
+  observation_profile: random_static
+  nimage: 1000
+  npixel: 64
+  coplanar: true
+sky_model:
+  from_sky_model: false
+  path: ''
+source:
+  nsource:
+    min: 2
+    max: 10
+  positions:
+    fixed: false
+    coordinates: null
+  power:
+    min: 0.5
+    max: 10
+  scale:
+    min: 2
+    max: 3
+noise:
+  add_noise: true
+  student: true
+  kdistribution: false
+  mixture: false
+  snr:
+    min: 20
+    max: 20
+  dof:
+    min: 2.5
+    max: 10
+calibration:
+  add_calibration_error: false
+  epsilon: 0.1
