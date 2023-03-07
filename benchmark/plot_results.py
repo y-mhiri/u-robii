@@ -100,8 +100,8 @@ def main(dsetpath, modelpath, out):
         df = pd.DataFrame(columns=['snr', 'ssim', 'ncc', 'method', 'image_idx'])
 
         for idx, (vi, true_image) in enumerate(zip(vis, images)):
-            estimated_image_unrolled = unrolledImager(vis[idx], model_path, freq, uvw, npix_x, npix_y, cellsize, niter=10)
-            estimated_image_em =  robust_ml_imager(vis[idx], uvw, freq, cellsize, 
+            estimated_image_unrolled = unrolledImager(vi, model_path, freq, uvw, npix_x, npix_y, cellsize, niter=10)
+            estimated_image_em =  robust_ml_imager(vi, uvw, freq, cellsize, 
                                                     npix_x=npix_x, npix_y=npix_y, 
                                                     nu=5, alpha=0.0004,
                                                     niter=100, gamma=0.001, miter=10)
