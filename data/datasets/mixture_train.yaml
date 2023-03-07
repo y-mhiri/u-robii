@@ -1,5 +1,5 @@
 info:
-  name: /gpfs/users/mhiriy/Documents/EUSIPCO-23/unrolled/data/datasets/mixture_train
+  name: /gpfs/users/mhiriy/Documents/u-robii/data/datasets/mixture_train
   observation_profile: random_static
   nimage: 1000
   npixel: 64

@@ -1,8 +1,8 @@
 info:
-  name: /gpfs/users/mhiriy/Documents/u-robii/data/datasets/mixture_test
+  name: /gpfs/users/mhiriy/Documents/u-robii/data/datasets/mixture_test-128px
   observation_profile: random_static
   nimage: 1000
-  npixel: 64
+  npixel: 128
   coplanar: true
 sky_model:
   from_sky_model: false
