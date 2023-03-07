@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from ..deep.models import RobustLayer
 from torchvision.transforms import ToTensor
-
+import torch
 
 def robust_ml_imager(vis, uvw, freq, cellsize, niter, 
                 model_image=None, npix_x=32, npix_y=32, 
