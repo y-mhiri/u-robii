@@ -22,8 +22,6 @@ from omegaconf import OmegaConf
 from .. import ROOT_DIR
 
 
-
-
 def get_path():
     print(ROOT_DIR)
 
@@ -147,8 +145,20 @@ def generate_dataset(configfile, seed):
 
     print(OmegaConf.to_yaml(conf))
 
+    # if msname == 'random_static':
+    #     ms = MS(f"{ROOT_DIR}/data/observation_profile/{msname}.MS")
+
+    #     nvis = 512
+    #     radius = 1e3
+
+    #     rng_uvw = np.random.default_rng(0)
+    #     gamma_texture = lambda dof: gamma.rvs(dof, 0, 1/dof, (nvis,1), random_state=rng_uvw)
+
+    #     uvw = gamma_texture(1)* rng_uvw.normal(0, radius, (nvis, 3))
+    # else:
     ms = MS(f"{ROOT_DIR}/../data/observation_profile/{msname}.MS")
     uvw = ms.uvw
+
     if coplanar:
         uvw[:,-1] = 0
 
@@ -234,14 +244,13 @@ def generate_dataset(configfile, seed):
 
         if add_noise:
 
-            invgamma_texture = lambda dof: invgamma.rvs(dof/2, 0, dof/2, (nvis,1), random_state=rng)
-            gamma_texture = lambda dof: gamma.rvs(dof, 0, 1/dof, (nvis,1), random_state=rng)
-            inv_gauss_texture = lambda dof: invgauss.rvs(mu=1, loc=0, scale=1/dof, size=(nvis,1), random_state=rng)
+            invgamma_texture = lambda dof: invgamma.rvs(dof/2, 0, dof/2, size=1, random_state=rng)
+            gamma_texture = lambda dof: gamma.rvs(dof, 0, 1/dof, size=1, random_state=rng)
+            inv_gauss_texture = lambda dof: invgauss.rvs(mu=1, loc=0, scale=1/dof, size=1, random_state=rng)
 
 
 
-            texture_distributions = (invgamma_texture, gamma_texture)
-            # texture_distributions = (invgamma_texture, gamma_texture, inv_gauss_texture)
+            texture_distributions = (invgamma_texture, gamma_texture, inv_gauss_texture)
             if student:
                 texture = invgamma_texture(dof[n])
                 vis[n,:] =  vis[n,:] + texture*speckle
@@ -252,8 +261,18 @@ def generate_dataset(configfile, seed):
                 noise[n,:] = texture*speckle
             elif mixture:
 
-                d_idx = rng.integers(2)
-                texture = texture_distributions[d_idx](dof[n])
+                texture = np.zeros((nvis,1))
+                for ii in range(nvis):
+                    d_idx = rng.integers(2)
+                    if d_idx == 0: # invgamma
+                        arg = rng.uniform(2.5,7)
+                    elif d_idx == 1: # gamma
+                        arg = rng.uniform(.1,1)
+                    elif d_idx == 2: #invgauss
+                        arg = rng.uniform(.5,1)
+                    
+                    texture[ii] = texture_distributions[d_idx](arg)
+                    
                 vis[n,:] =  vis[n,:] + texture*speckle
                 noise[n,:] = texture*speckle
             else:
