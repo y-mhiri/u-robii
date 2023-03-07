@@ -26,8 +26,8 @@ setuptools.setup(
                      'dash'],
     entry_points={
             'console_scripts': [
-                'generate_dataset = unrolled.source.astro.astro:generate_dataset', 
-                'train_model = unrolled.source.deep.train:train',
+                'generate_dataset = unrolled.astro.astro:generate_dataset', 
+                'train_model = unrolled.deep.train:train',
             ]
     },
     author_email='yassine.mhiri@outlook.fr',
