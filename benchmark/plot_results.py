@@ -63,31 +63,55 @@ def main(dsetpath, modelpath, out):
             pass
         
         estimated_image = unrolledImager(vis[idx], model_path, freq, uvw, npix_x, npix_y, cellsize, niter=10)
-        estimated_image_em =  robust_ml_imager(vis[idx], uvw, freq, cellsize, niter=100,
+        estimated_image_em_100 =  robust_ml_imager(vis[idx], uvw, freq, cellsize, niter=100,
+                        npix_x=npix_x, npix_y=npix_y, nu=5, alpha=0.0004,
+                        gamma=0.001, miter=10)
+        # estimated_image_em_50 =  robust_ml_imager(vis[idx], uvw, freq, cellsize, niter=50,
+        #                 npix_x=npix_x, npix_y=npix_y, nu=5, alpha=0.0004,
+        #                 gamma=0.001, miter=10)
+        estimated_image_em_10 =  robust_ml_imager(vis[idx], uvw, freq, cellsize, niter=10,
                         npix_x=npix_x, npix_y=npix_y, nu=5, alpha=0.0004,
                         gamma=0.001, miter=10)
 
         cmap = "Spectral_r"
 
+        # fig, ax = plt.subplots(figsize=(8, 8)) # set appropriate figure size
 
-        plt.figure(figsize=(20,5))
 
-        plt.subplot(131)
+        plt.figure()
+        # plt.subplot(221)
         plt.title('Unrolled robust')
         plt.imshow(estimated_image, cmap=cmap)
         plt.colorbar()
+        plt.savefig(f'{path}-unrolled.png')
 
 
-        plt.subplot(132)
-        plt.title('EM student-t')
-        plt.imshow(estimated_image_em, cmap=cmap)
+        plt.figure()
+        # plt.subplot(222)
+        plt.title('EM student-t (100 iterations)')
+        plt.imshow(estimated_image_em_100, cmap=cmap)
         plt.colorbar()
+        plt.savefig(f'{path}-em-100.png')
+
+        # plt.subplot(132)
+        # plt.title('EM student-t')
+        # plt.imshow(estimated_image_em_50, cmap=cmap)
+        # plt.colorbar()
+
+        plt.figure()
+        # plt.subplot(223)
+        plt.title('EM student-t (10 iterations)')
+        plt.imshow(estimated_image_em_10, cmap=cmap)
+        plt.colorbar()
+        plt.savefig(f'{path}-em-10.png')
 
 
-        plt.subplot(133)
+        plt.figure()
+        # plt.subplot(224)
         plt.title('True image')
         plt.imshow(images[idx], cmap=cmap)
         plt.colorbar()
+        plt.savefig(f'{path}-true-image.png')
 
         if save:
             plt.savefig(path)
@@ -101,7 +125,11 @@ def main(dsetpath, modelpath, out):
 
         for idx, (vi, true_image) in enumerate(zip(vis, images)):
             estimated_image_unrolled = unrolledImager(vi, model_path, freq, uvw, npix_x, npix_y, cellsize, niter=10)
-            estimated_image_em =  robust_ml_imager(vi, uvw, freq, cellsize, 
+            estimated_image_em_10 =  robust_ml_imager(vi, uvw, freq, cellsize, 
+                                                    npix_x=npix_x, npix_y=npix_y, 
+                                                    nu=5, alpha=0.0004,
+                                                    niter=10, gamma=0.001, miter=10)
+            estimated_image_em_100 =  robust_ml_imager(vi, uvw, freq, cellsize, 
                                                     npix_x=npix_x, npix_y=npix_y, 
                                                     nu=5, alpha=0.0004,
                                                     niter=100, gamma=0.001, miter=10)
@@ -110,12 +138,19 @@ def main(dsetpath, modelpath, out):
             df_unrolled = pd.DataFrame(np.array([[err_snr, err_ssim, err_ncc]]), columns=['snr','ssim', 'ncc'])
             df_unrolled['method'] = 'Unrolled Robust'
             df_unrolled['image_idx'] = idx
-            err_snr, err_ssim, err_ncc = compute_errors(estimated_image_em, true_image)
-            df_em = pd.DataFrame(np.array([[err_snr, err_ssim, err_ncc]]), columns=['snr','ssim', 'ncc'])
-            df_em['method'] = 'Robust EM'
-            df_em['image_idx'] = idx
 
-            df = pd.concat((df, df_em), ignore_index=True)
+            err_snr, err_ssim, err_ncc = compute_errors(estimated_image_em_10, true_image)
+            df_em_10 = pd.DataFrame(np.array([[err_snr, err_ssim, err_ncc]]), columns=['snr','ssim', 'ncc'])
+            df_em_10['method'] = 'Robust EM (10 iter)'
+            df_em_10['image_idx'] = idx
+
+            err_snr, err_ssim, err_ncc = compute_errors(estimated_image_em_100, true_image)
+            df_em_100 = pd.DataFrame(np.array([[err_snr, err_ssim, err_ncc]]), columns=['snr','ssim', 'ncc'])
+            df_em_100['method'] = 'Robust EM (100 iter)'
+            df_em_100['image_idx'] = idx
+
+            df = pd.concat((df, df_em_10), ignore_index=True)
+            df = pd.concat((df, df_em_100), ignore_index=True)
             df = pd.concat((df, df_unrolled), ignore_index=True)
 
         if save:
@@ -126,14 +161,14 @@ def main(dsetpath, modelpath, out):
 
 
     for ii in range(10):
-        show_image_examples(vis, images, modelpath, idx='random', save=True, path=f'{out}/images-{ii}.png')
+        show_image_examples(vis, images, modelpath, idx='random', save=True, path=f'{out}/images-{ii}')
 
-    df = benchmark(vis, images, modelpath, save=True, path=f'{out}/metrics.csv')
-    fig, axes = plt.subplots(1,3,sharex=False,sharey=False)
-    df.boxplot(by='method', ax=axes, column=['ncc', 'snr', 'ssim'], 
-                showfliers=False, fontsize=7)
+    # df = benchmark(vis, images, modelpath, save=True, path=f'{out}/metrics.csv')
+    # fig, axes = plt.subplots(1,3,sharex=False,sharey=False)
+    # df.boxplot(by='method', ax=axes, column=['ncc', 'snr', 'ssim'], 
+    #             showfliers=False, fontsize=7)
 
-    plt.savefig(f'{out}/plot.png')
+    # plt.savefig(f'{out}/plot.png')
 
     return True
 

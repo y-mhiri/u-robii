@@ -1,18 +1,9 @@
 plot_results.py:61: DeprecationWarning: This function is deprecated. Please call randint(1, 1000 + 1) instead
   idx = np.random.random_integers(len(images))
-plot_results.py:133: UserWarning: When passing multiple axes, sharex and sharey are ignored. These settings must be specified when creating axes.
-  df.boxplot(by='method', ax=axes, column=['ncc', 'snr', 'ssim'],
+plot_results.py:81: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  plt.figure()
 Dataset info : 
          created_at : 2023-03-04 09:14 
          number of image : 1000 
          image size : 64x64 pixels 
-         cellsize : 9.345286734293667e-05 rad
-plot_results.py:61: DeprecationWarning: This function is deprecated. Please call randint(1, 1000 + 1) instead
-  idx = np.random.random_integers(len(images))
-plot_results.py:133: UserWarning: When passing multiple axes, sharex and sharey are ignored. These settings must be specified when creating axes.
-  df.boxplot(by='method', ax=axes, column=['ncc', 'snr', 'ssim'],
-Dataset info : 
-         created_at : 2023-03-07 10:57 
-         number of image : 1000 
-         image size : 128x128 pixels 
          cellsize : 9.345286734293667e-05 rad
