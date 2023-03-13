@@ -98,7 +98,7 @@ def random_skymodel(nsources, npixel, pmin=0, pmax=1, sig_min=1, sig_max=10, fix
 @click.command()
 @click.argument('configfile', type=click.Path(exists=True))
 @click.option('--seed', default=-1, help='Seed value for RandomState')
-def generate_dataset(configfile, seed):
+def generate_test_set(configfile, seed):
 
     if seed == -1:
         rng = np.random.default_rng()
@@ -143,7 +143,7 @@ def generate_dataset(configfile, seed):
     add_calibration_error = conf.calibration.add_calibration_error
     epsilon = conf.calibration.epsilon
 
-    print(OmegaConf.to_yaml(conf))
+
 
     # if msname == 'random_static':
     #     ms = MS(f"{ROOT_DIR}/data/observation_profile/{msname}.MS")
@@ -156,149 +156,140 @@ def generate_dataset(configfile, seed):
 
     #     uvw = gamma_texture(1)* rng_uvw.normal(0, radius, (nvis, 3))
     # else:
-    ms = MS(f"{ROOT_DIR}/../data/observation_profile/{msname}.MS")
-    uvw = ms.uvw
 
-    if coplanar:
-        uvw[:,-1] = 0
+    uvw = dict()
+    for file in msname:
+        ms = MS(f"{ROOT_DIR}/../data/observation_profile/{file}.MS")
+        uvw[file] = ms.uvw
+
+        if coplanar:
+            uvw[file][:,-1] = 0
+    nuvw = len(uvw)
 
     freq = ms.chan_freq.reshape(-1)
-
-    nvis = len(uvw.reshape(-1,3))
     wl = speed_of_light / freq
-    cellsize = np.min(wl)/(np.max(uvw)*2)
 
+    cellsize = np.zeros(nuvw)
     model_images = zarr.zeros((nimage, npixel, npixel))
-
-    clean_vis = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
-    vis = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
-
-    noise = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
-    gains = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
 
     nsource = rng.integers(nsource_min, nsource_max, nimage)
     snr = rng.uniform(snr_min, snr_max, nimage)
     dof = rng.uniform(dof_min, dof_max, nimage)
 
-    if from_sky_model:
 
-        skymodel = np.load(sky_model_path)
-
-        assert skymodel.shape[0] == npixel
-        assert skymodel.shape[1] == npixel
-
-        model_vis =  dirty2ms(
-                            uvw = uvw,
-                            freq = freq,
-                            dirty = skymodel,
-                            pixsize_x = cellsize,
-                            pixsize_y = cellsize,
-                            epsilon=1.0e-7
-                        )
-
-    for n, _ in enumerate(model_images):
-
-        if from_sky_model:
-            model_images[n,:,:] = skymodel
-            clean_vis[n,:] = model_vis
-        else:
-
-            model_images[n,:,:] = random_skymodel(
-                                            nsources=nsource[n],
-                                            npixel=npixel,
-                                            pmin=pmin,
-                                            pmax=pmax,
-                                            sig_min=sig_min,
-                                            sig_max=sig_max,
-                                            fixed=fixed,
-                                            positions=positions,
-                                            rng=rng
-                                        )
-
-
-
-
-
-
-            clean_vis[n,:] = dirty2ms(
-                            uvw = uvw,
-                            freq = freq,
-                            dirty = model_images[n,:,:],
-                            pixsize_x = cellsize,
-                            pixsize_y = cellsize,
-                            epsilon=1.0e-7
-                        )
-
-
-        P0 = np.linalg.norm(clean_vis[n,:,:]- np.mean(clean_vis[n,:,:]))**2 / nvis
-        sigma2 = 10**(-snr[n]/10)*P0
-
-        speckle = complex_normal(np.zeros_like(vis[n,:]), sigma2*np.eye(nvis), rng=rng)
-
-        # Add noise and outliers
-        if add_calibration_error:
-            gains[n,:] = complex_normal(np.ones((nvis, len(freq))), epsilon**2 * np.eye(nvis))
-            vis[n,:] =  gains[n,:] * clean_vis[n,:]
-        else:
-            vis[n,:] =  clean_vis[n,:]
-
-        if add_noise:
-
-            invgamma_texture = lambda dof: invgamma.rvs(dof/2, 0, dof/2, size=1, random_state=rng)
-            gamma_texture = lambda dof: gamma.rvs(dof, 0, 1/dof, size=1, random_state=rng)
-            inv_gauss_texture = lambda dof: invgauss.rvs(mu=1, loc=0, scale=1/dof, size=1, random_state=rng)
-
-
-
-            texture_distributions = (invgamma_texture, gamma_texture, inv_gauss_texture)
-            if student:
-                texture = invgamma_texture(dof[n])
-                vis[n,:] =  vis[n,:] + texture*speckle
-                noise[n,:] = texture*speckle
-            elif kdistribution:
-                texture = gamma_texture(dof[n])
-                vis[n,:] =  vis[n,:] + texture*speckle
-                noise[n,:] = texture*speckle
-            elif mixture:
-
-                texture = np.zeros((nvis,1))
-                for ii in range(nvis):
-                    d_idx = rng.integers(2)
-                    if d_idx == 0: # invgamma
-                        arg = rng.uniform(2.5,7)
-                    elif d_idx == 1: # gamma
-                        arg = rng.uniform(.1,1)
-                    elif d_idx == 2: #invgauss
-                        arg = rng.uniform(.5,1)
-                    
-                    texture[ii] = texture_distributions[d_idx](arg)
-                    
-                vis[n,:] =  vis[n,:] + texture*speckle
-                noise[n,:] = texture*speckle
-            else:
-                vis[n,:] =  vis[n,:] + speckle
-                noise[n,:] = speckle
-
-
-
-
+    print(OmegaConf.to_yaml(conf))
 
     store = zarr.ZipStore(path, mode='w')
     root = zarr.group(store=store)
-    data = root.create_group('data')
-    data.create_dataset('vis', data=vis)
-    data.create_dataset('noise', data=noise)
-    data.create_dataset('gains', data=gains)
-    data.create_dataset('clean_vis', data=clean_vis)
-    data.create_dataset('model_images', data=model_images)
+
+
+
+    for n, _ in enumerate(model_images):
+
+        model_images[n,:,:] = random_skymodel(
+                                        nsources=nsource[n],
+                                        npixel=npixel,
+                                        pmin=pmin,
+                                        pmax=pmax,
+                                        sig_min=sig_min,
+                                        sig_max=sig_max,
+                                        fixed=fixed,
+                                        positions=positions,
+                                        rng=rng
+                                    )
+    root.create_dataset('model_images', data=model_images)
+
+    print('Sky image generated.')
+    print('Simulating visibilities')
+
+
+    for k,uv in enumerate(uvw.values()):
+        nvis = len(uv)
+        clean_vis = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
+        vis = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
+        noise = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
+        gains = zarr.zeros((nimage, nvis, len(freq)), dtype=complex)
+        cellsize[k] = np.min(wl)/(np.max(uv)*2)
+
+        for n in range(nimage):
+
+            clean_vis[n,:] = dirty2ms(
+                            uvw = uv,
+                            freq = freq,
+                            dirty = model_images[n,:,:],
+                            pixsize_x = cellsize[k],
+                            pixsize_y = cellsize[k],
+                            epsilon=1.0e-7
+                        )
+
+
+            P0 = np.linalg.norm(clean_vis[n,:,:]- np.mean(clean_vis[n,:,:]))**2 / nvis
+            sigma2 = 10**(-snr[n]/10)*P0
+
+            speckle = complex_normal(np.zeros_like(vis[n,:]), sigma2*np.eye(nvis), rng=rng)
+
+        # Add noise and outliers
+            if add_calibration_error:
+                gains[k,n,:] = complex_normal(np.ones((nvis, len(freq))), epsilon**2 * np.eye(nvis))
+                vis[n,:] =  gains[n,:] * clean_vis[n,:]
+            else:
+                vis[n,:] =  clean_vis[n,:]
+
+            if add_noise:
+
+                invgamma_texture = lambda dof: invgamma.rvs(dof/2, 0, dof/2, size=1, random_state=rng)
+                gamma_texture = lambda dof: gamma.rvs(dof, 0, 1/dof, size=1, random_state=rng)
+                inv_gauss_texture = lambda dof: invgauss.rvs(mu=1, loc=0, scale=1/dof, size=1, random_state=rng)
+
+
+
+                texture_distributions = (invgamma_texture, gamma_texture, inv_gauss_texture)
+                if student:
+                    texture = invgamma_texture(dof[n])
+                    vis[n,:] =  vis[n,:] + texture*speckle
+                    noise[n,:] = texture*speckle
+                elif kdistribution:
+                    texture = gamma_texture(dof[n])
+                    vis[n,:] =  vis[n,:] + texture*speckle
+                    noise[n,:] = texture*speckle
+                elif mixture:
+
+                    texture = np.zeros((nvis,1))
+                    for ii in range(nvis):
+                        d_idx = rng.integers(2)
+                        if d_idx == 0: # invgamma
+                            arg = rng.uniform(2.5,7)
+                        elif d_idx == 1: # gamma
+                            arg = rng.uniform(.1,1)
+                        elif d_idx == 2: #invgauss
+                            arg = rng.uniform(.5,1)
+                        
+                        texture[ii] = texture_distributions[d_idx](arg)
+                        
+                    vis[n,:] =  vis[n,:] + texture*speckle
+                    noise[n,:] = texture*speckle
+                else:
+                    vis[n,:] =  vis[n,:] + speckle
+                    noise[n,:] = speckle
+
+
+        z = root.create_group(msname[k])
+        z.create_dataset('vis', data=vis)
+        z.create_dataset("cellsize", data=np.array(cellsize[k]))
+
+        z.create_dataset('noise', data=noise)
+        z.create_dataset('gains', data=gains)
+        z.create_dataset('clean_vis', data=clean_vis)
+    
+
+
+
     info = root.create_group('info')
-    info.create_dataset('uvw', data=uvw)
     info.create_dataset('freq', data=freq)
 
     now = datetime.datetime.now()
     metadata = {"created_at" : now.strftime("%Y-%m-%d %H:%M"),
                 "config_file": configfile,
-                "cellsize": cellsize,
                 "nimage" : nimage,
                 "npixel" : npixel}
 
