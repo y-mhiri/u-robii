@@ -99,7 +99,7 @@ def unrolledImager(vis, model_path, freq, uvw, npix_x, npix_y, cellsize, niter):
     nvis = len(uvw)
 
     net_width = 300
-    net = RobustLayer(nvis)
+    net = RobustLayer(net_width)
     
     checkpoint = torch.load(model_path)
     
@@ -138,23 +138,22 @@ def unrolledImager(vis, model_path, freq, uvw, npix_x, npix_y, cellsize, niter):
         residual = (vis.reshape(-1) - model_vis.reshape(-1)).reshape(1,-1)
 
         npass = nvis // net_width
-
         expected_weights_tmp = np.zeros_like(expected_weights)
         for p in range(npass): # tester unitairement remplissage de vecteurs
 
-            if (net_width + 1) * p < nvis-1:
-
-                res = ToTensor()(np.linalg.norm(residual[net_width*p : (net_width + 1) * p], axis=0).reshape(1,-1).astype(np.float32)**2)
-                curr_weights = ToTensor()(expected_weights[net_width*p : (net_width + 1) * p].reshape(1,-1).astype(np.float32))
+            if ((net_width) * (p+1)) < nvis-1:
+                res = ToTensor()(np.linalg.norm(residual[:,net_width*p : (net_width) * (p+1)], axis=0).reshape(1,-1).astype(np.float32)**2)
+                curr_weights = ToTensor()(expected_weights[net_width*p : (net_width) * (p+1)].reshape(1,-1).astype(np.float32))
             
             else:
-                res = np.concatenate(residual[net_width*p : (net_width + 1) * p], np.zeros(nvis-p))
+                print(residual[:,net_width*p : (net_width) * (p+1)].shape)
+                res = np.concatenate(residual[:,net_width*p : (net_width) * (p+1)], np.zeros((1,nvis-p)))
                 res = ToTensor()(res.reshape(-1,1).astype(np.float32)**2)
-                curr_weights = np.concatenate(curr_weights[net_width*p : (net_width + 1) * p], np.zeros(nvis-p))
+                curr_weights = np.concatenate(curr_weights[net_width*p : (net_width ) * (p+1)], np.zeros(nvis-p))
                 curr_weights = ToTensor()(curr_weights.reshape(-1,1).astype(np.float32))
 
-            net_output = net(res, curr_weights) 
-            expected_weights_tmp[net_width*p : (net_width + 1) * p] = net_output.detach().numpy().squeeze()[net_width*p : (net_width + 1) * p]
+            net_output = net(res, curr_weights).detach().numpy().squeeze()
+            expected_weights_tmp[net_width*p : (net_width) * (p+1)] = net_output
 
         expected_weights = deepcopy(expected_weights_tmp)
         
